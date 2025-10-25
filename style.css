@@ -1,4 +1,4 @@
-/* Basic layout and reset */
+/* Reset and base styling */
 * {
   margin: 0;
   padding: 0;
@@ -10,33 +10,51 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  background: #f9f9f9;
+  color: #333;
 }
 
 /* Header */
 header {
-  background: #333;
+  background: #222;
   color: #fff;
   padding: 1rem;
   text-align: center;
 }
 
-/* Layout for blog and sidebar */
+header nav a {
+  color: #fff;
+  text-decoration: none;
+  margin-left: 1rem;
+}
+
+header nav a:hover {
+  text-decoration: underline;
+}
+
+/* Blog section */
 main {
   flex: 1;
   padding: 2rem;
   width: 70%;
-  margin: auto;
-  background: #fafafa;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  margin: 1.5rem auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  transition: opacity 0.3s ease;
 }
 
+/* Sidebar */
 aside {
+  width: 70%;
+  margin: 0 auto 2rem;
   background: #f4f4f4;
   padding: 1.5rem;
-  margin: 2rem auto;
-  width: 70%;
   border-radius: 10px;
+}
+
+aside h2 {
+  margin-bottom: 1rem;
 }
 
 aside ul {
@@ -48,8 +66,8 @@ aside li {
 }
 
 aside a {
-  text-decoration: none;
   color: #0077cc;
+  text-decoration: none;
 }
 
 aside a:hover {
@@ -58,7 +76,7 @@ aside a:hover {
 
 /* Footer */
 footer {
-  background: #333;
+  background: #222;
   color: #fff;
   text-align: center;
   padding: 1rem;

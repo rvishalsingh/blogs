@@ -1,0 +1,65 @@
+/* Basic layout and reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", sans-serif;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Header */
+header {
+  background: #333;
+  color: #fff;
+  padding: 1rem;
+  text-align: center;
+}
+
+/* Layout for blog and sidebar */
+main {
+  flex: 1;
+  padding: 2rem;
+  width: 70%;
+  margin: auto;
+  background: #fafafa;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+aside {
+  background: #f4f4f4;
+  padding: 1.5rem;
+  margin: 2rem auto;
+  width: 70%;
+  border-radius: 10px;
+}
+
+aside ul {
+  list-style: none;
+}
+
+aside li {
+  margin: 0.5rem 0;
+}
+
+aside a {
+  text-decoration: none;
+  color: #0077cc;
+}
+
+aside a:hover {
+  text-decoration: underline;
+}
+
+/* Footer */
+footer {
+  background: #333;
+  color: #fff;
+  text-align: center;
+  padding: 1rem;
+}

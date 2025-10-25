@@ -1,50 +1,45 @@
-// === Script to dynamically load blog content ===
+const blogFrame = document.getElementById("blog-frame");
+const links = document.querySelectorAll(".sidebar a");
 
-const blogSection = document.getElementById("blog-section");
-const links = document.querySelectorAll("#relevant-blogs a");
+function loadBlog(blogFile) {
+  blogFrame.src = blogFile;
+}
 
-// Load the selected blog into the main section
-async function loadBlog(blogFile) {
+// Adjust iframe height to fit content
+blogFrame.onload = function () {
   try {
-    blogSection.style.opacity = "0.5";
-    blogSection.innerHTML = "<p>Loading...</p>";
-
-    const res = await fetch(blogFile);
-    if (!res.ok) throw new Error("Blog not found");
-
-    const html = await res.text();
-    blogSection.innerHTML = html;
+    const iframeDoc = blogFrame.contentDocument || blogFrame.contentWindow.document;
+    blogFrame.style.height = iframeDoc.body.scrollHeight + 30 + "px"; // +30 for padding/margin
   } catch (err) {
-    blogSection.innerHTML = "<p>Sorry, this blog could not be loaded.</p>";
-  } finally {
-    blogSection.style.opacity = "1";
+    console.warn("Could not access iframe content height:", err);
   }
-}
+};
 
-// On first page load
-function init() {
-  const hash = window.location.hash.substring(1);
-  const defaultBlog = "blog1.html";
-  const blogToLoad = hash ? `${hash}.html` : defaultBlog;
-  loadBlog(blogToLoad);
-}
-
-// When user clicks on a relevant blog link
+// Handle link clicks
 links.forEach(link => {
   link.addEventListener("click", e => {
     e.preventDefault();
     const blogFile = link.dataset.blog;
-    window.location.hash = blogFile.replace(".html", ""); // update hash in URL
+    window.location.hash = blogFile.replace(".html", "");
     loadBlog(blogFile);
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 });
 
-// Handle browser back/forward button navigation
+// Load blog based on URL hash
+function init() {
+  const hash = window.location.hash.substring(1);
+  if (hash) {
+    const file = `${hash}.html`;
+    loadBlog(file);
+  }
+}
+
+// Handle back/forward buttons
 window.addEventListener("hashchange", () => {
   const hash = window.location.hash.substring(1);
   if (hash) loadBlog(`${hash}.html`);
 });
 
-// Initialize
+// Initialize on page load
 init();

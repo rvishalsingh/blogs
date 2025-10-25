@@ -7,30 +7,31 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- ===== Header ===== -->
+  <!-- Header -->
   <header>
     <h1>My Personal Blog</h1>
-    <nav>
-      <a href="index.html">Home</a>
-    </nav>
   </header>
 
-  <!-- ===== Blog Section (Dynamic Area) ===== -->
-  <main id="blog-section">
-    <!-- Blog content will be loaded here -->
-  </main>
+  <!-- Main Container: Sidebar + Blog -->
+  <div class="container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <h2>Relevant Blogs</h2>
+      <ul>
+        <li><a href="#" data-blog="blog1.html">Blog 1: Getting Started</a></li>
+        <li><a href="#" data-blog="blog2.html">Blog 2: Tips & Tricks</a></li>
+        <li><a href="#" data-blog="blog3.html">Blog 3: Advanced Topics</a></li>
+        <li><a href="#" data-blog="blog4.html">Blog 4: Metals & Mining Orders</a></li>
+      </ul>
+    </aside>
 
-  <!-- ===== Relevant Blogs Section ===== -->
-  <aside id="relevant-blogs">
-    <h2>Relevant Blogs</h2>
-    <ul>
-      <li><a href="#blog1" data-blog="blog1.html">Blog 1: Getting Started</a></li>
-      <li><a href="#blog2" data-blog="blog2.html">Blog 2: Tips & Tricks</a></li>
-      <li><a href="#blog3" data-blog="blog3.html">Blog 3: Advanced Topics</a></li>
-    </ul>
-  </aside>
+    <!-- Blog Section -->
+    <main>
+      <iframe id="blog-frame" src="blog1.html" frameborder="0"></iframe>
+    </main>
+  </div>
 
-  <!-- ===== Footer ===== -->
+  <!-- Footer -->
   <footer>
     <p>© 2025 My Personal Blog</p>
   </footer>

@@ -5,17 +5,6 @@ function loadBlog(blogFile) {
   blogFrame.src = blogFile;
 }
 
-// Adjust iframe height to fit content
-blogFrame.onload = function () {
-  try {
-    const iframeDoc = blogFrame.contentDocument || blogFrame.contentWindow.document;
-    blogFrame.style.height = iframeDoc.body.scrollHeight + 30 + "px"; // +30 for padding/margin
-  } catch (err) {
-    console.warn("Could not access iframe content height:", err);
-  }
-};
-
-// Handle link clicks
 links.forEach(link => {
   link.addEventListener("click", e => {
     e.preventDefault();
@@ -26,7 +15,6 @@ links.forEach(link => {
   });
 });
 
-// Load blog based on URL hash
 function init() {
   const hash = window.location.hash.substring(1);
   if (hash) {
@@ -35,11 +23,9 @@ function init() {
   }
 }
 
-// Handle back/forward buttons
 window.addEventListener("hashchange", () => {
   const hash = window.location.hash.substring(1);
   if (hash) loadBlog(`${hash}.html`);
 });
 
-// Initialize on page load
 init();

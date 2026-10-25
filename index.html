@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stock News Cards</title>
+<style>
+:root{--bg:#f3f5f9;--text:#101828;--muted:#667085;--btn:#0b2a6b;--btn-text:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1117;--text:#f0f3f8;--muted:#98a2b3;--btn:#2f6bff;--btn-text:#fff}}
+:root[data-theme="dark"]{--bg:#0d1117;--text:#f0f3f8;--muted:#98a2b3;--btn:#2f6bff;--btn-text:#fff}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:20px}
+h1{font-size:1.4rem;margin:0}
+.tools{display:flex;gap:10px;flex-wrap:wrap}
+input[type=search]{padding:9px 12px;border-radius:10px;border:1px solid #c7cdd8;background:transparent;color:var(--text);font-size:.95rem;min-width:200px}
+label.up{padding:9px 14px;border-radius:10px;background:var(--btn);color:var(--btn-text);font-size:.9rem;cursor:pointer}
+label.up input{display:none}
+label.up[hidden]{display:none}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+.card{position:relative;overflow:hidden;border-radius:16px;padding:22px 22px 20px;color:#fff;background:linear-gradient(135deg,#0a2a6e 0%,#123f9c 55%,#1c56c9 100%);box-shadow:0 6px 20px rgba(10,42,110,.25);display:flex;flex-direction:column;gap:14px;min-height:230px}
+.card::after{content:"";position:absolute;right:-50px;top:-50px;width:170px;height:170px;border-radius:50%;background:rgba(255,255,255,.07)}
+.brand{display:flex;align-items:center;gap:10px;position:relative;z-index:1}
+.logo{width:34px;height:34px;border-radius:9px;background:#fff;color:#0a2a6e;font-weight:800;display:grid;place-items:center;font-size:.95rem}
+.logo img{width:100%;height:100%;object-fit:contain;padding:4px;border-radius:9px}
+.photo{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center;background-repeat:no-repeat}
+.photo::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(10,42,110,.95) 0%,rgba(10,42,110,.82) 40%,rgba(18,63,156,.35) 100%);transition:background .25s}
+.card.has-photo::after{display:none}
+.card.has-photo .headline{max-width:78%}
+.card.open .photo::after{background:linear-gradient(90deg,rgba(10,42,110,.97) 0%,rgba(10,42,110,.93) 100%)}
+.card.open .headline{max-width:100%}
+.name{font-size:1.15rem;font-weight:700;letter-spacing:.2px}
+.headline{font-size:1.2rem;line-height:1.35;font-weight:600;margin:0;position:relative;z-index:1}
+.row{display:flex;align-items:center;gap:10px;margin-top:auto;position:relative;z-index:1}
+.pill{background:#16a34a;color:#fff;font-weight:700;font-size:.85rem;padding:6px 14px;border-radius:999px}
+.read{background:rgba(255,255,255,.15);color:#fff;border:0;border-radius:999px;padding:6px 14px;font-size:.82rem;cursor:pointer}
+.read:hover{background:rgba(255,255,255,.25)}
+.more{display:none;font-size:.92rem;line-height:1.5;color:#dbe6ff;margin:0;position:relative;z-index:1}
+.card.open .more{display:block}
+.empty{color:var(--muted);padding:40px 0;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Stock News</h1>
+    <div class="tools">
+      <input type="search" id="q" placeholder="Search name, code or headline">
+      <label class="up" id="upLabel" hidden>Upload Excel<input type="file" id="file" accept=".xlsx,.xls,.csv"></label>
+    </div>
+  </header>
+  <div class="grid" id="grid"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// The page loads admin.xlsx from the same folder every time it opens.
+// Columns (row 1): stock name | stock NSE code | Headline | 1 min read
+const EXCEL_FILE = "admin.xlsx";
+let DATA = [];
+
+// ---- LOGO SETTINGS ----
+// Logos are looked up by NSE code, in this order:
+// 1) a "logo" column in Excel (optional, full image link)
+// 2) logos/CODE.png (or .svg .jpg .webp), e.g. logos/INFY.png
+// 3) a "website" column in Excel (optional, e.g. infosys.com) -> logo fetched online automatically
+// 4) LOGO_API below (optional, leave empty if you don't use one)
+// 5) if nothing is found, the first letter is shown
+const LOGO_FOLDER = "logos/";
+const LOGO_EXTS = ["png", "svg", "jpg", "webp"];
+const LOGO_API = ""; // e.g. "https://img.logo.dev/ticker/{code}?token=YOUR_TOKEN"
+let CAND = [];
+
+function logoCandidates(r){
+  const code = String(r.code || "").trim().toUpperCase();
+  const list = [];
+  if(r.logo) list.push(String(r.logo).trim());
+  if(code){
+    LOGO_EXTS.forEach(e => list.push(LOGO_FOLDER + encodeURIComponent(code) + "." + e));
+    if(r.website){
+      const d = String(r.website).trim().replace(/^https?:\/\//,"").replace(/^www\./,"").split("/")[0];
+      if(d) list.push("https://www.google.com/s2/favicons?domain=" + encodeURIComponent(d) + "&sz=128");
+    }
+    if(LOGO_API) list.push(LOGO_API.replace("{code}", encodeURIComponent(code)));
+  }
+  return list;
+}
+function letter(r){ return esc((r.name||"?").trim().charAt(0).toUpperCase()); }
+
+const grid = document.getElementById("grid");
+const q = document.getElementById("q");
+
+function esc(s){return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+
+function message(text){ grid.innerHTML = '<div class="empty">' + esc(text) + '</div>'; }
+
+function render(){
+  const term = q.value.trim().toLowerCase();
+  const rows = DATA.filter(r => !term || (r.name + " " + r.code + " " + r.headline).toLowerCase().includes(term));
+  if(!rows.length){ message("No stocks found."); return; }
+  CAND = rows.map(logoCandidates);
+  grid.innerHTML = rows.map((r,i) => `
+    <article class="card${r.photo ? " has-photo" : ""}">
+      ${r.photo ? `<div class="photo" data-src="${esc(r.photo)}"></div>` : ""}
+      <div class="brand"><div class="logo">${CAND[i].length ? `<img src="${esc(CAND[i][0])}" alt="" data-k="${i}" data-n="0">` : letter(r)}</div><div class="name">${esc(r.name)}</div></div>
+      <h2 class="headline">${esc(r.headline)}</h2>
+      <p class="more">${esc(r.summary)}</p>
+      <div class="row">
+        <span class="pill">${esc(r.code)}</span>
+        <button class="read" type="button">1 min read</button>
+      </div>
+    </article>`).join("");
+  grid.querySelectorAll(".photo[data-src]").forEach(el => {
+    el.style.backgroundImage = 'url("' + el.dataset.src.replace(/["\\\n]/g, encodeURIComponent) + '")';
+  });
+}
+
+grid.addEventListener("click", e => {
+  const b = e.target.closest(".read");
+  if(b) b.closest(".card").classList.toggle("open");
+});
+q.addEventListener("input", render);
+grid.addEventListener("error", e => {
+  const img = e.target;
+  if(img.tagName !== "IMG") return;
+  const k = +img.dataset.k, n = +img.dataset.n + 1;
+  if(CAND[k] && n < CAND[k].length){ img.dataset.n = n; img.src = CAND[k][n]; }
+  else{
+    const row = img.closest(".card").querySelector(".name").textContent.trim();
+    img.parentElement.textContent = (row.charAt(0) || "?").toUpperCase();
+  }
+}, true);
+
+function parse(buf){
+  const wb = XLSX.read(buf);
+  const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, defval:""});
+  const head = rows[0].map(h => String(h).trim().toLowerCase());
+  const col = key => head.findIndex(h => h.includes(key));
+  const iName = col("name"), iCode = col("code"), iHead = col("headline"), iSum = col("read"), iLogo = col("logo"), iWeb = col("website"), iPhoto = [col("cover"), col("photo"), col("image")].find(i => i >= 0) ?? -1;
+  if([iName,iCode,iHead,iSum].some(i => i < 0)) throw new Error("columns");
+  DATA = rows.slice(1).filter(r => r.some(c => String(c).trim())).map(r => ({
+    name: r[iName], code: r[iCode], headline: r[iHead], summary: r[iSum], logo: iLogo >= 0 ? r[iLogo] : "", website: iWeb >= 0 ? r[iWeb] : "", photo: iPhoto >= 0 ? r[iPhoto] : ""
+  }));
+  render();
+}
+
+function fail(err){
+  if(err.message === "columns"){
+    message("Column headings not found. Row 1 must have: stock name, stock NSE code, Headline, 1 min read.");
+  }else{
+    message("Could not load " + EXCEL_FILE + " automatically (this is normal when opening the file from your computer). Click Upload Excel and choose your file.");
+  }
+}
+
+async function load(){
+  message("Loading stocks...");
+  try{
+    // ?v=timestamp bypasses the browser cache so visitors always get the latest file
+    const res = await fetch(EXCEL_FILE + "?v=" + Date.now(), {cache: "no-store"});
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    parse(await res.arrayBuffer());
+  }catch(err){
+    document.getElementById("upLabel").hidden = false;
+    let saved = null;
+    try{ saved = JSON.parse(localStorage.getItem("stockCardsData") || "null"); }catch(_){}
+    if(saved && saved.length){ DATA = saved; render(); }
+    else fail(err);
+  }
+}
+
+document.getElementById("file").addEventListener("change", async e => {
+  const f = e.target.files[0];
+  if(!f) return;
+  try{
+    parse(await f.arrayBuffer());
+    try{ localStorage.setItem("stockCardsData", JSON.stringify(DATA)); }catch(_){}
+  }catch(err){ fail(err); }
+});
+
+load();
+</script>
+</body>
+</html>

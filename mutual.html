@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Financial Calculators | Vishal Singh</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body { font-family: Arial, sans-serif; margin: 0; background: #f4f6f8; color: #222; }
+header { background: linear-gradient(135deg,#0d6efd,#084298); color: #fff; padding: 18px; text-align: center; }
+.container { max-width: 1000px; margin: auto; padding: 20px; }
+.card { background: #fff; padding: 22px; border-radius: 14px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); margin-bottom: 22px; }
+.calc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+.calc-card { border-radius: 16px; padding: 20px; text-align: center; cursor: pointer; transition: 0.3s; background: linear-gradient(180deg,#ffffff,#f3f6ff); border: 2px solid transparent; }
+.calc-card.active { border-color: #0d6efd; box-shadow: 0 10px 25px rgba(13,110,253,0.25); transform: translateY(-2px); }
+.calc-card h4 { margin: 10px 0 4px; }
+.calc-card small { color: #555; font-size: 13px; }
+label { font-weight: bold; display: block; margin-top: 12px; }
+input, button { width: 100%; padding: 11px; margin-top: 6px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; }
+button { background: #0d6efd; color: #fff; border: none; cursor: pointer; margin-top: 18px; }
+button:hover { background: #084298; }
+.results { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 22px; }
+.result-box { background: #f1f5ff; padding: 18px; border-radius: 12px; text-align: center; }
+canvas { margin-top: 25px; }
+.amount-words { font-style: italic; color: #555; margin-top: 4px; }
+footer { text-align: center; font-size: 14px; padding: 12px; color: #666; }
+.switch { position: relative; display: inline-block; width: 60px; height: 34px; margin-top:6px;}
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+.slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius:50%; }
+input:checked + .slider { background-color: #0d6efd; }
+input:checked + .slider:before { transform: translateX(26px); }
+</style>
+</head>
+<body>
+
+<header>
+  <h2>Financial Calculators</h2>
+  <p>Presented by Vishal Singh</p>
+</header>
+
+<div class="container">
+
+  <!-- Row 1: Mutual Fund -->
+  <div class="card">
+    <h3 style="text-align:center;">Mutual Fund Calculators</h3>
+    <div class="calc-grid">
+      <div class="calc-card active" data-type="sip" onclick="selectCalc('sip')">📈<h4>SIP</h4><small>Systematic Investment Plan</small></div>
+      <div class="calc-card" data-type="swp" onclick="selectCalc('swp')">💸<h4>SWP</h4><small>Systematic Withdrawal Plan</small></div>
+      <div class="calc-card" data-type="lumpsum" onclick="selectCalc('lumpsum')">💰<h4>Lumpsum</h4><small>One-time investment</small></div>
+      <div class="calc-card" data-type="liquid" onclick="selectCalc('liquid')">🏦<h4>Liquid Fund</h4><small>Low risk short-term fund</small></div>
+    </div>
+  </div>
+
+  <!-- Row 2: Other Calculators -->
+  <div class="card">
+    <h3 style="text-align:center;">Additional Calculators</h3>
+    <div class="calc-grid">
+      <div class="calc-card" data-type="loanFree" onclick="selectCalc('loanFree')">⚖️<h4>Loan Free</h4><small>EMI vs Investment</small></div>
+      <div class="calc-card" data-type="goalSetting" onclick="selectCalc('goalSetting')">🎯<h4>Goal Setting</h4><small>SIP / Lumpsum</small></div>
+      <div class="calc-card" data-type="emiCalc" onclick="selectCalc('emiCalc')">🏠<h4>EMI Calculator</h4><small>Loan EMI Calculator</small></div>
+    </div>
+  </div>
+
+  <!-- Dynamic Input & Results Area -->
+  <div class="card" id="dynamicCard"></div>
+  <canvas id="chart"></canvas>
+
+</div>
+
+<footer>Financial calculators are illustrative. Returns are not guaranteed.</footer>
+
+<script>
+let selectedType='sip';
+let chart;
+
+// ===== Number to Words =====
+function numberToWords(num) {
+  const a=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+  const b=['','', 'Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+  if(num===0) return 'Zero';
+  function inWords(n){
+    if(n<20) return a[n];
+    if(n<100) return b[Math.floor(n/10)] + (n%10 ? ' ' + a[n%10] : '');
+    if(n<1000) return a[Math.floor(n/100)] + ' Hundred' + (n%100 ? ' ' + inWords(n%100) : '');
+    if(n<100000) return inWords(Math.floor(n/1000)) + ' Thousand' + (n%1000 ? ' ' + inWords(n%1000) : '');
+    if(n<10000000) return inWords(Math.floor(n/100000)) + ' Lakh' + (n%100000 ? ' ' + inWords(n%100000) : '');
+    return inWords(Math.floor(n/10000000)) + ' Crore' + (n%10000000 ? ' ' + inWords(n%10000000) : '');
+  }
+  return inWords(num);
+}
+
+function formatINR(num){ return '₹'+num.toLocaleString('en-IN',{maximumFractionDigits:0}); }
+function updateResult(id,value){
+  document.getElementById(id).innerText=formatINR(value);
+  let p=document.getElementById(id+'Words');
+  if(!p){
+    p=document.createElement('p'); p.className='amount-words'; p.id=id+'Words'; document.getElementById(id).insertAdjacentElement('afterend',p);
+  }
+  p.innerText=numberToWords(Math.round(value))+' Rupees';
+}
+
+// ===== Select Calculator =====
+function selectCalc(type){
+  selectedType = type;
+
+  document.querySelectorAll('.calc-card')
+    .forEach(c => c.classList.remove('active'));
+
+  document.querySelector(`.calc-card[data-type="${type}"]`)
+    .classList.add('active');
+
+  renderInputs();
+
+  // ⬇️ AUTO SCROLL TO INPUT SECTION (MOBILE FRIENDLY)
+  setTimeout(scrollToInputs, 100);
+}
+
+// ===== Render Dynamic Inputs =====
+function renderInputs(){
+  const container=document.getElementById('dynamicCard');
+  container.innerHTML='';
+
+  function attachAmountListener(inputId){
+    const input=document.getElementById(inputId);
+    let p=document.getElementById(inputId+'Words');
+    if(!p){ p=document.createElement('p'); p.className='amount-words'; p.id=inputId+'Words'; input.insertAdjacentElement('afterend',p);}
+    input.addEventListener('input',()=>{const val=parseInt(input.value)||0; p.innerText=numberToWords(val)+' Rupees';});
+    p.innerText=numberToWords(parseInt(input.value)||0)+' Rupees';
+  }
+
+  // ==== Mutual Fund ====
+  if(['sip','swp','lumpsum','liquid'].includes(selectedType)){
+    container.innerHTML=`
+      <label id="amountLabel">Investment Amount (₹)</label>
+      <input type="number" id="amount" value="500000">
+      <div id="swpDiv" style="display:${selectedType==='swp'?'block':'none'};">
+        <label>Withdrawal Per Month (₹)</label><input type="number" id="withdrawal" value="10000">
+      </div>
+      <label id="durationLabel">Duration (Years/Days)</label><input type="number" id="duration" value="10">
+      <label>Expected Return (% p.a.)</label><input type="number" id="rate" value="12">
+      <button onclick="calculateMF()">Calculate</button>
+      <div id="swpAlert" style="display:none;background:#ffe6e6;color:#b30000;padding:12px;border-radius:10px;margin-top:10px;font-weight:bold;text-align:center;"></div>
+      <div class="results">
+        <div class="result-box"><h4>Total Invested</h4><p id="invested">₹0</p></div>
+        <div class="result-box"><h4>Total Gain / Withdrawal</h4><p id="gain">₹0</p></div>
+        <div class="result-box"><h4>Final Portfolio Value</h4><p id="final">₹0</p></div>
+      </div>
+    `;
+    attachAmountListener('amount');
+    if(selectedType==='swp') attachAmountListener('withdrawal');
+  }
+
+  // ==== Loan Free ====
+  if(selectedType==='loanFree'){
+    container.innerHTML=`
+      <label>Asset Value (₹)</label><input type="number" id="loanAsset" value="1000000">
+      <label>Down Payment (₹)</label><input type="number" id="loanDown" value="200000">
+      <label>Processing Fees (₹)</label><input type="number" id="loanFee" value="10000">
+      <label>Loan ROI (% p.a.)</label><input type="number" id="loanR" value="9">
+      <label>Loan Period (Years)</label><input type="number" id="loanY" value="10">
+      <label>Mutual Fund ROI (% p.a.)</label><input type="number" id="loanMF" value="12">
+      <button onclick="calcLoanFree()">Calculate</button>
+      <div class="results" id="loanResults"></div>
+    `;
+    ['loanAsset','loanDown','loanFee'].forEach(attachAmountListener);
+  }
+
+  // ==== Goal Setting ====
+  if(selectedType==='goalSetting'){
+    container.innerHTML=`
+      <label>Goal Amount (₹)</label><input type="number" id="goalAmount" value="1000000">
+      <label>Expected ROI (% p.a.)</label><input type="number" id="goalRoi" value="12">
+      <label>Time Period (Years)</label><input type="number" id="goalYears" value="10">
+      <label>Mode: SIP / Lumpsum</label><label class="switch"><input type="checkbox" id="goalMode"><span class="slider"></span></label>
+      <button onclick="calcGoal()">Calculate</button>
+      <div class="results" id="goalResults"></div>
+    `;
+    attachAmountListener('goalAmount');
+  }
+
+  // ==== EMI Calculator ====
+  if(selectedType==='emiCalc'){
+    container.innerHTML=`
+      <label>Loan Amount (₹)</label><input type="number" id="emiLoan" value="1000000">
+      <label>Interest Rate (% p.a.)</label><input type="number" id="emiRate" value="8">
+      <label>Tenure (Years)</label><input type="number" id="emiYears" value="5">
+      <button onclick="calcEMI()">Calculate</button>
+      <div class="results" id="emiResults"></div>
+    `;
+    attachAmountListener('emiLoan');
+  }
+}
+
+// ===== Pie Chart =====
+function drawPie(invested,gain){
+  if(chart) chart.destroy();
+  chart=new Chart(document.getElementById('chart'),{
+    type:'doughnut',
+    data:{labels:['Invested','Returns'],datasets:[{data:[invested,gain],backgroundColor:['#0d6efd','#20c997'],hoverOffset:8}]},
+    options:{cutout:'60%',plugins:{legend:{position:'bottom'}}}
+  });
+}
+
+// ===== Calculations =====
+function calculateMF(){
+  const amount=parseFloat(document.getElementById('amount').value);
+  const duration=parseFloat(document.getElementById('duration').value);
+  const rate=parseFloat(document.getElementById('rate').value)/100;
+  let invested=0,finalValue=0,gain=0;
+  document.getElementById('swpAlert').style.display='none';
+
+  if(selectedType==='sip'){
+    const m=duration*12,r=rate/12;
+    invested=amount*m;
+    finalValue=amount*((Math.pow(1+r,m)-1)/r)*(1+r);
+    gain=finalValue-invested;
+  }
+  if(selectedType==='lumpsum'){
+    invested=amount;
+    finalValue=amount*Math.pow(1+rate,duration);
+    gain=finalValue-invested;
+  }
+  if(selectedType==='swp'){
+    const m=duration*12,r=rate/12,w=parseFloat(document.getElementById('withdrawal').value);
+    let balance=amount,withdrawn=0;
+    for(let i=1;i<=m;i++){
+      balance=balance*(1+r)-w;
+      if(balance<=0){withdrawn+=Math.max(0,w+balance);balance=0;
+        document.getElementById('swpAlert').style.display='block';
+        document.getElementById('swpAlert').innerText=`⚠️ Portfolio exhausted in ${(i/12).toFixed(1)} years`; break;
+      } withdrawn+=w;
+    }
+    invested=amount; finalValue=balance; gain=withdrawn;
+  }
+  if(selectedType==='liquid'){
+    invested=amount;
+    finalValue=amount+(amount*rate*duration)/365;
+    gain=finalValue-invested;
+  }
+
+  updateResult('invested',invested);
+  updateResult('gain',gain);
+  updateResult('final',finalValue);
+  drawPie(invested,gain);
+}
+
+function calcLoanFree(){
+  const asset=parseFloat(document.getElementById('loanAsset').value);
+  const down=parseFloat(document.getElementById('loanDown').value);
+  const fee=parseFloat(document.getElementById('loanFee').value);
+  const loanR=parseFloat(document.getElementById('loanR').value)/1200;
+  const years=parseFloat(document.getElementById('loanY').value);
+  const mfR=parseFloat(document.getElementById('loanMF').value)/100/12;
+
+  const loanAmt=asset-down+fee;
+  const n=years*12;
+  const emi=loanAmt*loanR*Math.pow(1+loanR,n)/(Math.pow(1+loanR,n)-1);
+  const totalPay=emi*n;
+  const sip=totalPay*mfR/(Math.pow(1+mfR,n)-1);
+
+  const res=document.getElementById('loanResults');
+  res.innerHTML=`<div class="result-box"><h4>Loan Amount</h4><p id="loanAmt">0</p></div>
+    <div class="result-box"><h4>Monthly EMI</h4><p id="emi">0</p></div>
+    <div class="result-box"><h4>Total Payment</h4><p id="totalPay">0</p></div>
+    <div class="result-box"><h4>Required SIP</h4><p id="sipRequired">0</p></div>`;
+
+  updateResult('loanAmt',loanAmt);
+  updateResult('emi',emi);
+  updateResult('totalPay',totalPay);
+  updateResult('sipRequired',sip);
+
+  drawPie(totalPay,loanAmt);
+}
+
+function calcGoal(){
+  const goal = parseFloat(document.getElementById('goalAmount').value);
+  const roi = parseFloat(document.getElementById('goalRoi').value)/100;
+  const years = parseFloat(document.getElementById('goalYears').value);
+  const isSIP = document.getElementById('goalMode').checked; // true = SIP, false = Lumpsum
+
+  let invested = 0, finalValue = goal;
+
+  if(isSIP){
+    // SIP mode
+    const n = years * 12;
+    const r = roi / 12;
+    const monthlySIP = goal / ((Math.pow(1 + r, n) - 1) / r * (1 + r));
+    invested = monthlySIP * n;
+
+    const res = document.getElementById('goalResults');
+    res.innerHTML = `
+      <div class="result-box"><h4>Required Monthly SIP</h4><p id="goalInvested">0</p></div>
+      <div class="result-box"><h4>Goal Amount</h4><p id="goalFinal">0</p></div>
+      <div class="result-box"><h4>Invested Amount</h4><p id="goalInvestedAmount">0</p></div>
+    `;
+
+    updateResult('goalInvested', monthlySIP);
+    updateResult('goalFinal', finalValue);
+    updateResult('goalInvestedAmount', invested);
+
+    drawPie(invested, finalValue - invested);
+
+  } else {
+    // Lumpsum mode
+    invested = goal / Math.pow(1 + roi, years);
+
+    const res = document.getElementById('goalResults');
+    res.innerHTML = `
+      <div class="result-box"><h4>Required Lumpsum</h4><p id="goalInvested">0</p></div>
+      <div class="result-box"><h4>Goal Amount</h4><p id="goalFinal">0</p></div>
+      <div class="result-box"><h4>Invested Amount</h4><p id="goalInvestedAmount">0</p></div>
+    `;
+
+    updateResult('goalInvested', invested);
+    updateResult('goalFinal', finalValue);
+    updateResult('goalInvestedAmount', invested);
+
+    drawPie(invested, finalValue - invested);
+  }
+}
+
+function calcEMI(){
+  const P=parseFloat(document.getElementById('emiLoan').value);
+  const r=parseFloat(document.getElementById('emiRate').value)/1200;
+  const n=parseFloat(document.getElementById('emiYears').value)*12;
+  const emi=P*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1);
+  const total=emi*n;
+  const interest=total-P;
+
+  const res=document.getElementById('emiResults');
+  res.innerHTML=`<div class="result-box"><h4>EMI</h4><p id="emiCalc">0</p></div>
+    <div class="result-box"><h4>Total Payment</h4><p id="emiTotal">0</p></div>
+    <div class="result-box"><h4>Total Interest</h4><p id="emiInterest">0</p></div>`;
+
+  updateResult('emiCalc',emi);
+  updateResult('emiTotal',total);
+  updateResult('emiInterest',interest);
+
+  drawPie(P,interest);
+}
+
+// ===== Initial Render =====
+renderInputs();
+
+function scrollToInputs() {
+  const el = document.getElementById('dynamicCard');
+  if (!el) return;
+
+  el.scrollIntoView({
+    behavior: 'smooth',
+    block: 'start'
+  });
+}
+</script>
+
+</body>
+</html>
+

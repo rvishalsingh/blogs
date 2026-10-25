@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WealthWise</title>
+<style>
+:root{--bg:#e9f1f3;--app:#fff;--card:#fff;--ink:#0f1f3d;--sub:#4a5f8a;--g:#0b8a4a;--g2:#e6f5ec;--line:#e4ece8;--red:#e0322b;--tint:#eef7f2;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1411;--app:#0f1a16;--card:#142320;--ink:#eaf3ef;--sub:#9fb4c9;--g:#2fc27a;--g2:#173a2a;--line:#22362f;--tint:#16291f;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0b1411;--app:#0f1a16;--card:#142320;--ink:#eaf3ef;--sub:#9fb4c9;--g:#2fc27a;--g2:#173a2a;--line:#22362f;--tint:#16291f;color-scheme:dark}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{background:var(--bg);color:var(--ink);font-family:"Poppins","Segoe UI",system-ui,sans-serif;display:flex;justify-content:center}
+.app{width:100%;max-width:430px;min-height:100vh;background:var(--app);position:relative;padding:14px 14px 92px;overflow-x:hidden}
+@media(min-width:500px){body{padding:24px 0}.app{min-height:0;border-radius:44px;box-shadow:0 20px 60px rgba(20,60,50,.15)}}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.brand{display:flex;align-items:center;gap:8px}
+.brand h1{font-size:23px;font-weight:600;line-height:1}
+.brand small{color:var(--sub);font-size:15px}
+.lang{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:30px;padding:4px 10px 4px 8px;font-size:14px;color:var(--sub)}
+.lang button{border:0;background:none;font:inherit;color:var(--sub);padding:5px 12px;border-radius:20px;cursor:pointer}
+.lang button.on{background:var(--g);color:#fff;font-weight:600}
+.menu{width:34px;height:34px;border:0;background:none;padding:4px;display:grid;align-content:center;gap:6px;cursor:pointer}
+.menu i{height:3px;width:26px;background:var(--ink);border-radius:3px;display:block;transition:transform .25s,opacity .25s}
+
+/* Hamburger Slide-out Drawer */
+.drawer-backdrop{position:fixed;inset:0;background:rgba(10,25,20,.45);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .25s ease;z-index:20}
+.drawer-backdrop.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:280px;max-width:82vw;background:var(--app);border-left:1px solid var(--line);box-shadow:-10px 0 30px rgba(0,0,0,.15);transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);z-index:21;display:flex;flex-direction:column;padding:20px 16px calc(20px + env(safe-area-inset-bottom,0px))}
+.drawer.open{transform:translateX(0)}
+.drawer-head{display:flex;align-items:center;justify-content:space-between;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.drawer-close{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--tint);color:var(--ink);font-size:20px;line-height:1;display:grid;place-items:center;cursor:pointer}
+.drawer-links{display:grid;gap:8px;margin-top:16px}
+.drawer-links a{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;text-decoration:none;color:var(--ink);font-weight:500;font-size:15.5px;border:1px solid transparent;transition:background .2s,color .2s}
+.drawer-links a:hover,.drawer-links a.on{background:var(--g2);color:var(--g);border-color:var(--line);font-weight:600}
+.drawer-links a svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.drawer-links a.chat-btn{margin-top:8px;background:var(--g);color:#fff;font-weight:600;justify-content:center}
+.drawer-links a.chat-btn:hover{opacity:.95;color:#fff}
+
+.hero{margin-top:14px;border-radius:18px;background:linear-gradient(120deg,var(--g2),var(--tint));padding:20px 16px;position:relative;overflow:hidden;min-height:128px}
+.hero h2{font-size:18.5px;line-height:1.4;font-weight:500;max-width:62%;color:var(--ink)}
+.hero h2 span{color:var(--g)}
+.hero svg{position:absolute;right:0;bottom:0;width:48%}
+.card{margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:0 2px 10px rgba(30,80,60,.05)}
+.row{display:flex;align-items:center;justify-content:space-between}
+.ico{width:46px;height:46px;border-radius:12px;background:var(--g2);display:grid;place-items:center;flex:none}
+.ico svg{width:26px;height:26px;stroke:var(--g);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ttl{font-size:16.5px;font-weight:600;line-height:1.25}
+.muted{color:var(--sub);font-size:13.5px}
+.va{color:var(--g);font-size:14px;font-weight:500;text-decoration:none;white-space:nowrap}
+.stocks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:14px}
+.st{min-width:0;overflow:hidden;border:1px solid var(--line);border-radius:12px;padding:10px 4px;text-align:center;font-size:12px;box-shadow:0 2px 8px rgba(30,80,60,.05)}
+.st .lg{height:38px;display:grid;place-items:center;font-weight:700;margin-bottom:4px}
+.st b{display:block;font-weight:500;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.up,.dn{display:block;white-space:nowrap;font-weight:600;font-size:13px}
+.up{color:var(--g)}.dn{color:var(--red)}
+.profit{margin-top:12px;border-radius:14px;background:var(--tint);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:12px 10px}
+.profit>div{display:flex;gap:8px;align-items:center;min-width:0}
+.profit>div+div{border-left:1px solid var(--line);padding-left:10px}
+.profit .ico{width:38px;height:38px;background:var(--g2);flex:none}
+.profit p{font-size:12px;color:var(--sub);white-space:nowrap}
+.profit strong{font-size:16.5px;font-weight:600;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.profit em{font-style:normal;font-size:11.5px;color:var(--g);font-weight:500}
+.disc{display:flex;gap:8px;margin-top:12px;font-size:11.5px;color:var(--sub);line-height:1.5}
+.disc i{flex:none;width:18px;height:18px;border-radius:50%;background:var(--sub);color:var(--card);font-style:normal;font-weight:700;display:grid;place-items:center;font-size:12px}
+.mf{background:linear-gradient(120deg,var(--card),var(--g2));position:relative;overflow:hidden}
+.mf .ico{background:var(--g);width:50px;height:50px;border-radius:12px}.mf .ico svg{stroke:#fff}
+.arrow{width:36px;height:36px;border-radius:50%;background:var(--g2);display:grid;place-items:center;color:var(--g);font-size:20px;position:absolute;right:14px;top:14px;border:0;font-weight:700;cursor:pointer}
+.chips{display:grid;grid-template-columns:repeat(4,auto);gap:8px;margin-top:34px;position:relative}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:30px;padding:11px 4px;font:inherit;font-size:14px;color:var(--sub);cursor:pointer;white-space:nowrap}
+.chip.on{background:var(--g);color:#fff;font-weight:600;border-color:var(--g)}
+.news{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;margin-top:12px;scrollbar-width:none}
+.news::-webkit-scrollbar{display:none}
+.n{flex:0 0 80%;scroll-snap-align:start;border-radius:12px;color:#fff;padding:16px;min-height:150px;position:relative;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between}
+.n.a{background:linear-gradient(120deg,#0a1f4d,#1b4a9a)}
+.n.b{background:linear-gradient(120deg,#1a4a73,#5a8fb8)}
+.n.c{background:linear-gradient(120deg,#073b2a,#1b8a5e)}
+.n h4{font-size:16px;font-weight:700;margin-bottom:10px;position:relative;z-index:1}
+.n p{font-size:14px;line-height:1.45;max-width:85%;font-weight:500;position:relative;z-index:1}
+.pill{display:inline-block;margin-top:10px;background:#1fa463;border-radius:20px;padding:3px 14px;font-size:13px;font-weight:600;align-self:flex-start;position:relative;z-index:1}
+.dots{display:flex;gap:6px;justify-content:center;margin-top:10px;flex-wrap:wrap}.dots i{width:8px;height:8px;border-radius:50%;background:var(--line);transition:background .2s}.dots i.on{background:var(--g)}
+nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--app);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding:10px 4px calc(10px + env(safe-area-inset-bottom,0px));z-index:5}
+@media(min-width:500px){nav{position:sticky;bottom:0;transform:none;margin:0 -14px -92px;width:calc(100% + 28px);max-width:none;border-radius:0 0 44px 44px}.app{padding-bottom:92px}}
+nav button{border:0;background:none;font:inherit;font-size:13.5px;color:var(--sub);display:grid;justify-items:center;gap:4px;cursor:pointer}
+nav button.on{color:var(--g);font-weight:600}
+nav svg{width:30px;height:30px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+nav button.on svg{fill:var(--g)}
+@media(max-width:360px){.hero h2{font-size:16px}.profit strong{font-size:14.5px}.ttl{font-size:15px}.up,.dn{font-size:11.5px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="brand">
+    <svg width="48" height="48" viewBox="0 0 48 48" fill="#0b8a4a"><rect x="4" y="30" width="7" height="14" rx="2"/><rect x="15" y="22" width="7" height="22" rx="2"/><rect x="26" y="26" width="7" height="18" rx="2"/><rect x="37" y="14" width="7" height="30" rx="2"/><path d="M5 22l10-8 8 5 15-14" stroke="#0b8a4a" stroke-width="3.5" fill="none" stroke-linecap="round"/></svg>
+    <div><h1>WealthWise</h1><small>Vishal</small></div>
+  </div>
+  <div class="lang">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0b8a4a" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>
+    <button class="on" data-l="en">EN</button><button data-l="hi">हिंदी</button>
+  </div>
+  <button class="menu" id="menuBtn" aria-label="Menu" aria-expanded="false"><i></i><i></i><i></i></button>
+</header>
+
+<!-- Slide-out Hamburger Menu Drawer -->
+<div class="drawer-backdrop" id="drawerBackdrop"></div>
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-head">
+    <div class="brand">
+      <svg width="38" height="38" viewBox="0 0 48 48" fill="#0b8a4a"><rect x="4" y="30" width="7" height="14" rx="2"/><rect x="15" y="22" width="7" height="22" rx="2"/><rect x="26" y="26" width="7" height="18" rx="2"/><rect x="37" y="14" width="7" height="30" rx="2"/><path d="M5 22l10-8 8 5 15-14" stroke="#0b8a4a" stroke-width="3.5" fill="none" stroke-linecap="round"/></svg>
+      <div><h1 style="font-size:19px">WealthWise</h1><small style="font-size:13px">Vishal</small></div>
+    </div>
+    <button class="drawer-close" id="drawerClose" aria-label="Close Menu">&times;</button>
+  </div>
+  <div class="drawer-links">
+    <a href="mobile.html" class="on">
+      <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/></svg>
+      <span data-i="n_h">Home</span>
+    </a>
+    <a href="mutual.html">
+      <svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><rect x="8" y="6" width="8" height="3"/><path d="M8 13h.01M12 13h.01M16 13h.01M8 17h.01M12 17h.01M16 17h.01"/></svg>
+      <span data-i="m_calc">Calculator</span>
+    </a>
+    <a href="index.html">
+      <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><rect x="7" y="6" width="5" height="4"/><path d="M14 7h3M14 10h3M7 14h10M7 17h10"/></svg>
+      <span data-i="n_n">News</span>
+    </a>
+    <a href="performance.html">
+      <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 6-7"/><path d="M16 7h4v4"/></svg>
+      <span data-i="m_perf">Stock Performance</span>
+    </a>
+    <a href="https://wa.aisensy.com/aabqxh" target="_blank" rel="noopener" class="chat-btn">
+      <svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 01-11.6 7.1L4 20l1-4.6A8 8 0 1121 12z"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01"/></svg>
+      <span data-i="n_t">Lets talk</span>
+    </a>
+  </div>
+</aside>
+
+<section class="hero">
+  <h2 data-i="hero">Stay Updated on the Stock News That Matters, <span>Plan Your Wealth, and Master Stock Analysis.</span></h2>
+  <svg viewBox="0 0 200 130"><g fill="#b9e3cb"><rect x="10" y="85" width="8" height="30" rx="2"/><rect x="30" y="70" width="8" height="45" rx="2"/><rect x="50" y="55" width="8" height="60" rx="2"/><rect x="70" y="40" width="8" height="75" rx="2"/></g><rect x="100" y="55" width="22" height="60" rx="3" fill="#35b574"/>
+  <path d="M150 70c-25 0-35-25-30-45 25 0 35 20 30 45zM152 70c0-25 18-40 38-38-2 22-18 38-38 38z" fill="#2f9e5f"/><path d="M150 72v22" stroke="#2f9e5f" stroke-width="4"/>
+  <g fill="#f2b431" stroke="#c9861a"><ellipse cx="150" cy="116" rx="36" ry="8"/><ellipse cx="150" cy="106" rx="34" ry="8"/><ellipse cx="150" cy="96" rx="30" ry="7"/></g></svg>
+</section>
+
+<section class="card">
+  <div class="row" style="align-items:flex-start">
+    <div style="display:flex;gap:14px"><div class="ico"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 6-7"/><path d="M16 7h4v4"/></svg></div>
+    <div><div class="ttl" data-i="q">What If You Invested ₹1,00,000 Equally Across All Stocks?</div><p class="muted" style="margin-top:4px" data-i="qs">Stock Performance Driven by News</p></div></div>
+    <!-- Clicking View All opens performance.html -->
+    <a class="va" href="performance.html" data-i="va">View All ›</a>
+  </div>
+  <div class="stocks" id="perf-stocks">
+    <div class="st" onclick="location.href='performance.html'" style="cursor:pointer"><div class="lg" style="color:#0a3c8f"><svg width="44" height="34" viewBox="0 0 44 34"><circle cx="22" cy="12" r="11" fill="#0a5bc4"/><path d="M8 8h28M22 8v16" stroke="#fff" stroke-width="3"/><text x="22" y="33" font-size="9" font-weight="800" text-anchor="middle" fill="#0a3c8f">TATA</text></svg></div><b>TATA MOTORS</b><span class="up">▲ +2%</span></div>
+    <div class="st" onclick="location.href='performance.html'" style="cursor:pointer"><div class="lg"><svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="#c98a2b"/><circle cx="20" cy="18" r="8" fill="#fff"/></svg></div><b>Reliance</b><span class="dn">▼ -2%</span></div>
+    <div class="st" onclick="location.href='performance.html'" style="cursor:pointer"><div class="lg" style="color:#1c6dd0;font-weight:500;font-size:20px;letter-spacing:-1px">Infosys</div><b>&nbsp;</b><span class="up">▲ +7%</span></div>
+    <div class="st" onclick="location.href='performance.html'" style="cursor:pointer"><div class="lg" style="font-size:34px;font-weight:700;letter-spacing:-3px;background:linear-gradient(90deg,#e0225e,#3b5bdb);-webkit-background-clip:text;background-clip:text;color:transparent">tcs</div><b>TCS</b><span class="up">▲ +10%</span></div>
+  </div>
+  <div class="profit">
+    <div><div class="ico"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="7" rx="6" ry="3"/><path d="M6 7v4c0 1.7 2.7 3 6 3s6-1.3 6-3V7M6 11v4c0 1.7 2.7 3 6 3s6-1.3 6-3v-4"/></svg></div><div style="min-width:0"><p data-i="dp">Delivery Profit</p><strong id="perf-dp">₹5,628 <em>(+2%)</em></strong></div></div>
+    <div><div class="ico"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 6-7"/></svg></div><div style="min-width:0"><p data-i="ip">Intraday Profit</p><strong id="perf-ip">₹28,125 <em>(+8%)</em></strong></div></div>
+  </div>
+  <div class="disc"><i>i</i><span data-i="dis">Disclaimer: This is just an illustration for educational purposes only. We do not provide any buy or sell recommendations.</span></div>
+</section>
+
+<!-- Mutual Fund Calculator Section -->
+<section class="card mf">
+  <div style="display:flex;gap:14px;align-items:center;cursor:pointer" onclick="location.href='mutual.html'"><div class="ico"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><rect x="8" y="6" width="8" height="4"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg></div>
+  <div><div class="ttl" style="font-size:19px" data-i="mf">Mutual Fund Calculator</div><p class="muted" style="font-size:15px;margin-top:2px" data-i="mfs">Plan your bigger tomorrow</p></div></div>
+  <button class="arrow" aria-label="Open" onclick="location.href='mutual.html'">→</button>
+  <div class="chips" id="chips">
+    <button class="chip on" onclick="location.href='mutual.html'">SIP</button>
+    <button class="chip" onclick="location.href='mutual.html'">Lumpsum</button>
+    <button class="chip" data-i="gb" onclick="location.href='mutual.html'">Goal Based</button>
+    <button class="chip" data-i="rt" onclick="location.href='mutual.html'">Returns</button>
+  </div>
+</section>
+
+<section class="card">
+  <div class="row">
+    <div style="display:flex;gap:14px;align-items:center">
+      <svg width="42" height="38" viewBox="0 0 42 38" fill="none" stroke="#4a5f8a" stroke-width="1.8"><rect x="2" y="3" width="38" height="32" rx="4"/><rect x="8" y="9" width="12" height="9"/><path d="M24 10h10M24 16h10M8 24h26M8 30h26"/></svg>
+      <div class="ttl" style="font-size:19px" data-i="mn">Market News &amp; Insights</div>
+    </div>
+    <!-- Clicking View All opens index.html -->
+    <a class="va" href="index.html" data-i="va2">View All ›</a>
+  </div>
+  <div class="news" id="news">
+    <div class="n a"><div><h4>TATA MOTORS</h4><p data-i="n1">Tata Motors reports strong Q2 results, shares up 4%</p></div><span class="pill">+4.2%</span></div>
+    <div class="n b"><div><h4><span style="background:#fff;color:#0a2a6a;padding:2px 6px;border-radius:3px;font-size:12px">HDFC BANK</span></h4><p data-i="n2">HDFC Bank Q2 profit beats estimates</p></div><span class="pill">+2.8%</span></div>
+    <div class="n c"><div><h4>INFOSYS</h4><p>Infosys raises FY27 revenue guidance</p></div><span class="pill">+3.1%</span></div>
+  </div>
+  <div class="dots" id="dots"><i class="on"></i><i></i><i></i></div>
+</section>
+
+<nav id="nav">
+  <button class="on" data-href="mobile.html"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/></svg><span data-i="n_h">Home</span></button>
+  <button data-href="mutual.html"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><rect x="8" y="6" width="8" height="3"/><path d="M8 13h.01M12 13h.01M16 13h.01M8 17h.01M12 17h.01M16 17h.01"/></svg><span data-i="n_c">Calculate wealth</span></button>
+  <button data-href="index.html"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><rect x="7" y="6" width="5" height="4"/><path d="M14 7h3M14 10h3M7 14h10M7 17h10"/></svg><span data-i="n_n">News</span></button>
+  <button data-href="https://wa.aisensy.com/aabqxh"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 01-11.6 7.1L4 20l1-4.6A8 8 0 1121 12z"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01"/></svg><span data-i="n_t">Lets talk</span></button>
+</nav>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+var T={hi:{hero:'काम की स्टॉक खबरों से अपडेट रहें, <span>अपनी संपत्ति की योजना बनाएं और स्टॉक विश्लेषण में माहिर बनें।</span>',q:'अगर आप सभी स्टॉक्स में बराबर ₹1,00,000 निवेश करते?',qs:'खबरों से प्रेरित स्टॉक प्रदर्शन',va:'सभी देखें ›',va2:'सभी देखें ›',dp:'डिलीवरी लाभ',ip:'इंट्राडे लाभ',dis:'अस्वीकरण: यह केवल शैक्षिक उद्देश्य के लिए एक उदाहरण है। हम कोई खरीद या बिक्री की सलाह नहीं देते।',mf:'म्यूचुअल फंड कैलकुलेटर',mfs:'अपने बेहतर कल की योजना बनाएं',gb:'लक्ष्य आधारित',rt:'रिटर्न',mn:'बाज़ार समाचार और जानकारी',n1:'टाटा मोटर्स के Q2 नतीजे मजबूत, शेयर 4% ऊपर',n2:'HDFC बैंक का Q2 मुनाफा अनुमान से बेहतर',n_h:'होम',n_c:'संपत्ति गणना',n_n:'समाचार',n_t:'बात करें',m_calc:'कैलकुलेटर',m_perf:'स्टॉक प्रदर्शन'}};
+var D={};document.querySelectorAll('[data-i]').forEach(function(e){D[e.dataset.i]=e.innerHTML});
+function setL(l){document.documentElement.lang=l;document.querySelectorAll('[data-i]').forEach(function(e){var k=e.dataset.i;if(D[k])e.innerHTML=(l==='hi'&&T.hi[k])?T.hi[k]:D[k]});
+document.querySelectorAll('.lang button').forEach(function(b){b.classList.toggle('on',b.dataset.l===l)})}
+document.querySelectorAll('.lang button').forEach(function(b){b.onclick=function(){setL(b.dataset.l)}});
+
+// Hamburger Drawer Toggle
+var menuBtn=document.getElementById('menuBtn'),
+    drawer=document.getElementById('drawer'),
+    drawerBackdrop=document.getElementById('drawerBackdrop'),
+    drawerClose=document.getElementById('drawerClose');
+
+function toggleDrawer(open){
+  var isOpen = typeof open === 'boolean' ? open : !drawer.classList.contains('open');
+  drawer.classList.toggle('open', isOpen);
+  drawerBackdrop.classList.toggle('open', isOpen);
+  menuBtn.setAttribute('aria-expanded', isOpen);
+  drawer.setAttribute('aria-hidden', !isOpen);
+}
+menuBtn.addEventListener('click', function(){ toggleDrawer(); });
+drawerClose.addEventListener('click', function(){ toggleDrawer(false); });
+drawerBackdrop.addEventListener('click', function(){ toggleDrawer(false); });
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') toggleDrawer(false); });
+
+// Open mutual.html on clicking any button inside Mutual Fund section (.mf)
+document.querySelectorAll('.mf button').forEach(function(b){
+  b.addEventListener('click', function(){
+    document.querySelectorAll('#chips .chip').forEach(function(x){x.classList.remove('on')});
+    if(b.classList.contains('chip')) b.classList.add('on');
+    location.href = 'mutual.html';
+  });
+});
+
+// Footer navigation links
+document.querySelectorAll('#nav button').forEach(function(c){
+  c.onclick=function(){
+    document.querySelectorAll('#nav button').forEach(function(x){x.classList.remove('on')});
+    c.classList.add('on');
+    var target = c.getAttribute('data-href');
+    if(target){
+      if(/^https?:\/\//i.test(target)){
+        window.open(target, '_blank', 'noopener');
+      } else {
+        location.href = target;
+      }
+    }
+  };
+});
+
+var nw=document.getElementById('news'),dotsWrap=document.getElementById('dots');
+var perfStocksEl=document.getElementById('perf-stocks'),perfDpEl=document.getElementById('perf-dp'),perfIpEl=document.getElementById('perf-ip');
+
+function esc(s){return String(s ?? "").replace(/[&<>"']/g, function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]});}
+
+// --- Performance Calculation & Rendering (from performance.html logic) ---
+function norm(s){return String(s==null?'':s).toLowerCase().replace(/\s+/g,' ').trim();}
+function num(v){var n=parseFloat(String(v).replace(/[₹,\s]/g,''));return isNaN(n)?null:n;}
+function pick(row,keys){
+  for(var k in row){var nk=norm(k);for(var i=0;i<keys.length;i++){if(nk===keys[i])return row[k];}}
+  return '';
+}
+function initials(n){return n.split(/\s+/).filter(Boolean).slice(0,2).map(function(w){return w[0].toUpperCase();}).join('')||'?';}
+function fmtInt(n){return Math.round(n).toLocaleString('en-IN');}
+function fmtPct(n){return Number(Math.abs(n).toFixed(2));}
+
+function renderPerformanceSection(rows){
+  if(!rows || !rows.length || !perfStocksEl) return;
+  var valid=[], totalPct=0;
+  rows.forEach(function(r){
+    var name=String(pick(r,['stock name','name','company'])).trim();
+    var logo=String(pick(r,['logo'])).trim();
+    var o=num(pick(r,['opening','open'])), c=num(pick(r,['closing','close']));
+    if(!name || o===null || c===null || o===0) return;
+    var pct=(c-o)/o*100, rounded=Math.round(pct*100)/100;
+    valid.push({name:name, logo:logo, pct:rounded});
+    totalPct += rounded;
+  });
+  if(!valid.length) return;
+
+  var colors=['#0a3c8f','#c98a2b','#1c6dd0','#0b8a4a'];
+  // Show first 4 stocks in strict equal-width 4-column grid
+  perfStocksEl.innerHTML = valid.slice(0,4).map(function(item, idx){
+    var isUp = item.pct >= 0;
+    var cls = isUp ? 'up' : 'dn';
+    var arrow = isUp ? '▲ +' : '▼ -';
+    var pctStr = fmtPct(item.pct) + '%';
+    var col = colors[idx % colors.length];
+    var lgContent = /^https?:\/\//i.test(item.logo)
+      ? '<img src="' + esc(item.logo) + '" alt="" referrerpolicy="no-referrer" style="max-width:36px;max-height:34px;object-fit:contain">'
+      : '<span style="color:' + col + ';font-size:16px;font-weight:700">' + esc(initials(item.name)) + '</span>';
+    return '<div class="st" onclick="location.href=\'performance.html\'" style="cursor:pointer" title="' + esc(item.name) + '">' +
+      '<div class="lg">' + lgContent + '</div>' +
+      '<b>' + esc(item.name) + '</b>' +
+      '<span class="' + cls + '">' + arrow + pctStr + '</span>' +
+    '</div>';
+  }).join('');
+
+  // Calculate 1X Delivery (₹1,00,000) and 5X Intraday (₹5,00,000)
+  totalPct = Math.round(totalPct * 100) / 100;
+  var profit1x = (100000 * totalPct) / 100;
+  var pct5x = Math.round(totalPct * 5 * 100) / 100;
+  var profit5x = (500000 * totalPct) / 100;
+
+  var sign1x = totalPct > 0 ? '+' : totalPct < 0 ? '-' : '';
+  var sign5x = pct5x > 0 ? '+' : pct5x < 0 ? '-' : '';
+  var pSign1x = profit1x < 0 ? '-' : '';
+  var pSign5x = profit5x < 0 ? '-' : '';
+  var emStyle1x = totalPct < 0 ? ' style="color:var(--red)"' : '';
+  var emStyle5x = pct5x < 0 ? ' style="color:var(--red)"' : '';
+
+  if(perfDpEl){
+    perfDpEl.innerHTML = pSign1x + '₹' + fmtInt(Math.abs(profit1x)) + ' <em' + emStyle1x + '>(' + sign1x + fmtPct(totalPct) + '%)</em>';
+  }
+  if(perfIpEl){
+    perfIpEl.innerHTML = pSign5x + '₹' + fmtInt(Math.abs(profit5x)) + ' <em' + emStyle5x + '>(' + sign5x + fmtPct(pct5x) + '%)</em>';
+  }
+}
+
+// Render all Excel news cards inside the mobile.html carousel in the exact same style
+function renderNewsCarousel(rows){
+  if(!rows || !rows.length) return;
+  var styles = ['a', 'b', 'c'];
+  nw.innerHTML = rows.map(function(r, idx){
+    var cls = styles[idx % styles.length];
+    return '<div class="n ' + cls + '" onclick="location.href=\'index.html\'">' +
+      '<div><h4>' + esc(r.name) + '</h4>' +
+      '<p>' + esc(r.headline) + '</p></div>' +
+      '<span class="pill">' + esc(r.code) + '</span>' +
+    '</div>';
+  }).join('');
+  dotsWrap.innerHTML = rows.map(function(_, idx){
+    return '<i' + (idx === 0 ? ' class="on"' : '') + '></i>';
+  }).join('');
+}
+
+// Update active dot on horizontal scroll
+nw.addEventListener('scroll',function(){
+  var ds=dotsWrap.querySelectorAll('i');
+  if(!ds.length) return;
+  var maxScroll = nw.scrollWidth - nw.clientWidth;
+  var i = maxScroll > 0 ? Math.round((nw.scrollLeft / maxScroll) * (ds.length - 1)) : 0;
+  ds.forEach(function(d,j){d.classList.toggle('on',j===i)});
+});
+
+// Only block placeholder '#' links; allow 'index.html' and 'performance.html' to open normally
+document.querySelectorAll('a.va[href="#"]').forEach(function(a){a.onclick=function(e){e.preventDefault()}});
+
+// Load Excel news & performance data from localStorage or admin.xlsx
+async function syncExcelData(){
+  var savedNews = null, savedPerf = null;
+  try{ savedNews = JSON.parse(localStorage.getItem("stockCardsData") || "null"); }catch(_){}
+  try{ savedPerf = JSON.parse(localStorage.getItem("stockRows") || "null"); }catch(_){}
+
+  if(savedNews && savedNews.length) renderNewsCarousel(savedNews);
+  if(savedPerf && savedPerf.length) renderPerformanceSection(savedPerf);
+
+  try{
+    var res = await fetch("admin.xlsx?v=" + Date.now(), {cache: "no-store"});
+    if(!res.ok) return;
+    var buf = await res.arrayBuffer();
+    var wb = XLSX.read(buf);
+    var sheet = wb.Sheets[wb.SheetNames[0]];
+
+    // 1) Sync Performance rows from sheet if opening/closing columns exist
+    var objRows = XLSX.utils.sheet_to_json(sheet, {defval:""});
+    if(objRows && objRows.length){
+      var hasPerfCols = objRows.some(function(r){
+        var name = String(pick(r,['stock name','name','company'])).trim();
+        var o = num(pick(r,['opening','open'])), c = num(pick(r,['closing','close']));
+        return name && o !== null && c !== null && o !== 0;
+      });
+      if(hasPerfCols){
+        renderPerformanceSection(objRows);
+        try{ localStorage.setItem("stockRows", JSON.stringify(objRows)); }catch(_){}
+      }
+    }
+
+    // 2) Sync News Carousel rows from sheet
+    var rows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:""});
+    if(rows && rows.length){
+      var head = rows[0].map(function(h){return String(h).trim().toLowerCase()});
+      var col = function(key){return head.findIndex(function(h){return h.includes(key)})};
+      var iName = col("name"), iCode = col("code"), iHead = col("headline"), iSum = col("read");
+      if(![iName,iCode,iHead,iSum].some(function(i){return i < 0})){
+        var data = rows.slice(1).filter(function(r){return r.some(function(c){return String(c).trim()})}).map(function(r){
+          return {name: r[iName], code: r[iCode], headline: r[iHead], summary: r[iSum]};
+        });
+        if(data.length){
+          renderNewsCarousel(data);
+          try{ localStorage.setItem("stockCardsData", JSON.stringify(data)); }catch(_){}
+        }
+      }
+    }
+  }catch(_){}
+}
+
+syncExcelData();
+window.addEventListener("storage", function(e){
+  if(e.key === "stockCardsData" || e.key === "stockRows") syncExcelData();
+});
+</script>
+</body>
+</html>

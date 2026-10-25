@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stock movers from Excel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Hanken+Grotesk:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#f3f5f2; --surface:#ffffff; --ink:#14201a; --muted:#5d6b63; --line:#dfe5e0;
+  --up:#0b8a4a; --up-bg:#e1f4e9; --down:#c8283c; --down-bg:#fbe5e8; --flat:#5d6b63; --flat-bg:#e9edea;
+  --accent:#14201a;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1511; --surface:#17211b; --ink:#eaf1ec; --muted:#93a39a; --line:#26342b;
+    --up:#3ddc84; --up-bg:#12301f; --down:#ff6b7d; --down-bg:#3a1920; --flat:#93a39a; --flat-bg:#212d25; --accent:#eaf1ec;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1511; --surface:#17211b; --ink:#eaf1ec; --muted:#93a39a; --line:#26342b;
+  --up:#3ddc84; --up-bg:#12301f; --down:#ff6b7d; --down-bg:#3a1920; --flat:#93a39a; --flat-bg:#212d25; --accent:#eaf1ec;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hanken Grotesk",system-ui,sans-serif;line-height:1.5}
+main{max-width:1000px;margin:0 auto;padding:32px 20px 56px}
+h1{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:clamp(1.8rem,5vw,2.6rem);line-height:1.1;margin:0 0 6px;letter-spacing:-.02em}
+.sub{color:var(--muted);margin:0 0 24px;max-width:56ch}
+.drop{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:32px 20px;border:2px dashed var(--line);border-radius:14px;background:var(--surface);cursor:pointer;transition:border-color .15s,background .15s}
+.drop.over,.drop:focus-visible{border-color:var(--ink);outline:none}
+.drop strong{font-size:1.05rem}
+.drop span{color:var(--muted);font-size:.92rem}
+.btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:4px}
+button{font:inherit;font-weight:600;padding:9px 16px;border-radius:999px;border:1px solid var(--ink);background:var(--ink);color:var(--bg);cursor:pointer}
+button.ghost{background:transparent;color:var(--ink)}
+button:focus-visible{outline:3px solid var(--up);outline-offset:2px}
+#msg{margin:14px 0 0;color:var(--down);min-height:1.4em;font-size:.95rem}
+
+/* Return Summary Cards Grid */
+.summary-wrap{display:none;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;margin-bottom:24px}
+.summary-wrap.show{display:grid}
+.sum-card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:22px 24px;box-shadow:0 6px 18px rgba(20,32,26,.06);display:flex;flex-direction:column;gap:16px}
+.sum-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sum-head h2{font-family:"Bricolage Grotesque",sans-serif;font-size:1.2rem;margin:0}
+.badge{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:4px 10px;border-radius:999px;background:var(--flat-bg);color:var(--ink)}
+.sum-sub{margin:0;color:var(--muted);font-size:.9rem}
+.sum-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding-top:12px;border-top:1px solid var(--line)}
+.stat-box{display:flex;flex-direction:column}
+.stat-label{font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600;margin-bottom:2px}
+.stat-val{font-family:"Bricolage Grotesque",sans-serif;font-size:1.3rem;font-weight:700;font-variant-numeric:tabular-nums}
+.sum-card.up .stat-val.accent{color:var(--up)}
+.sum-card.down .stat-val.accent{color:var(--down)}
+.sum-card.flat .stat-val.accent{color:var(--flat)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:18px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:26px 18px 22px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;box-shadow:0 6px 18px rgba(20,32,26,.06)}
+.logo{width:112px;height:112px;border-radius:16px;background:#fff;padding:8px;flex:none;display:flex;align-items:center;justify-content:center;overflow:hidden;font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:1.8rem;color:#14201a}
+.logo img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain}
+.name{min-height:2.5em;display:flex;align-items:center;justify-content:center;font-weight:500;font-size:1.05rem;letter-spacing:.01em;text-transform:uppercase;line-height:1.25;overflow-wrap:anywhere}
+.chg{margin-top:auto;display:inline-flex;align-items:center;gap:7px;font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:1.5rem;font-variant-numeric:tabular-nums}
+.up .chg{color:var(--up)} .down .chg{color:var(--down)} .flat .chg{color:var(--flat)}
+.chg svg{width:18px;height:18px;fill:currentColor}
+</style>
+</head>
+<body>
+<main>
+  <h1>Stock movers from Excel</h1>
+  <p class="sub">Upload your sheet to see each stock’s change from opening to closing price.</p>
+
+  <label class="drop" id="drop" tabindex="0">
+    <strong>Drop your Excel file here or click to choose</strong>
+    <span>.xlsx, .xls or .csv with columns: stock name, logo, opening, closing</span>
+    <input id="file" type="file" accept=".xlsx,.xls,.csv" hidden>
+    <div class="btns">
+      <button type="button" id="pick">Choose file</button>
+      <button type="button" class="ghost" id="sample">Try sample data</button>
+    </div>
+  </label>
+  <p id="msg" role="alert"></p>
+
+  <!-- Two Return Summary Cards (1X & 5X Leverage) -->
+  <section class="summary-wrap" id="summary-wrap" aria-live="polite">
+    <!-- Card 1: 1X Standard (1 Lakh) -->
+    <article class="sum-card" id="card-1x">
+      <div>
+        <div class="sum-head">
+          <h2>₹1,00,000 Investment</h2>
+          <span class="badge">1X Cash</span>
+        </div>
+        <p class="sum-sub" id="sub-1x">Combined return across 0 stocks</p>
+      </div>
+      <div class="sum-stats">
+        <div class="stat-box">
+          <span class="stat-label">Total Return</span>
+          <span class="stat-val accent" id="pct-1x">0.00%</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Profit / Loss</span>
+          <span class="stat-val accent" id="profit-1x">₹0.00</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Becomes</span>
+          <span class="stat-val" id="total-1x">₹1,00,000.00</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- Card 2: 5X Intraday Leverage (5 Lakhs) -->
+    <article class="sum-card" id="card-5x">
+      <div>
+        <div class="sum-head">
+          <h2>₹5,00,000 Exposure</h2>
+          <span class="badge">5X Intraday</span>
+        </div>
+        <p class="sum-sub" id="sub-5x">₹1 Lakh with 5X intraday leverage</p>
+      </div>
+      <div class="sum-stats">
+        <div class="stat-box">
+          <span class="stat-label">5X Return (on 1L)</span>
+          <span class="stat-val accent" id="pct-5x">0.00%</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Profit / Loss</span>
+          <span class="stat-val accent" id="profit-5x">₹0.00</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">5L Becomes</span>
+          <span class="stat-val" id="total-5x">₹5,00,000.00</span>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="grid" id="grid" aria-live="polite"></section>
+</main>
+
+<script>
+(function(){
+  var grid=document.getElementById('grid'), msg=document.getElementById('msg'),
+      drop=document.getElementById('drop'), input=document.getElementById('file'),
+      summaryWrap=document.getElementById('summary-wrap'),
+      card1x=document.getElementById('card-1x'), card5x=document.getElementById('card-5x');
+
+  var INVEST_1X = 100000; // 1 Lakh (₹1,00,000)
+  var INVEST_5X = 500000; // 5 Lakhs (₹5,00,000 - 5X Intraday Leverage)
+
+  function norm(s){return String(s==null?'':s).toLowerCase().replace(/\s+/g,' ').trim();}
+  function num(v){var n=parseFloat(String(v).replace(/[₹,\s]/g,''));return isNaN(n)?null:n;}
+  function pick(row,keys){
+    for(var k in row){var nk=norm(k);for(var i=0;i<keys.length;i++){if(nk===keys[i])return row[k];}}
+    return '';
+  }
+  function initials(n){return n.split(/\s+/).filter(Boolean).slice(0,2).map(function(w){return w[0].toUpperCase();}).join('')||'?';}
+  function fmt(n){return n.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});}
+
+  function card(r){
+    var name=String(pick(r,['stock name','name','company'])).trim();
+    var logo=String(pick(r,['logo'])).trim();
+    var o=num(pick(r,['opening','open'])), c=num(pick(r,['closing','close']));
+    if(!name||o===null||c===null||o===0)return null;
+    var pct=(c-o)/o*100, rounded=Math.round(pct*100)/100;
+    var dir=rounded>0?'up':rounded<0?'down':'flat';
+    var sign=dir==='up'?'+':dir==='down'?'−':'';
+    var arrow=dir==='up'?'<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1 11 10H1z"/></svg>'
+             :dir==='down'?'<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 11 1 2h10z"/></svg>':'';
+    var el=document.createElement('article');
+    el.className='card '+dir;
+    el.innerHTML='<div class="logo"></div><div class="name"></div>'
+      +'<div class="chg" aria-label="">'+arrow+'<span class="p"></span></div>';
+    el.querySelector('.name').textContent=name;
+    el.querySelector('.p').textContent=sign+String(Number(Math.abs(rounded).toFixed(2)))+'%';
+    el.querySelector('.chg').setAttribute('aria-label',(dir==='up'?'Up ':dir==='down'?'Down ':'Unchanged ')+Math.abs(rounded).toFixed(2)+' percent');
+    var box=el.querySelector('.logo'); box.textContent=initials(name);
+    if(/^https?:\/\//i.test(logo)){
+      var img=new Image(); img.alt=''; img.referrerPolicy='no-referrer';
+      img.onload=function(){box.textContent='';box.appendChild(img);};
+      img.src=logo;
+    }
+    return {el:el,dir:dir,pct:rounded};
+  }
+
+  function render(rows){
+    grid.innerHTML=''; msg.textContent='';
+    var n=0, totalPct=0;
+    rows.forEach(function(r){
+      var c=card(r);
+      if(!c)return;
+      grid.appendChild(c.el);
+      totalPct += c.pct;
+      n++;
+    });
+    if(!n){
+      summaryWrap.className='summary-wrap';
+      msg.textContent='No usable rows found. Check that the sheet has stock name, opening and closing columns with numbers.';
+      return;
+    }
+
+    totalPct = Math.round(totalPct * 100) / 100;
+    var sumDir = totalPct > 0 ? 'up' : totalPct < 0 ? 'down' : 'flat';
+    var sign = sumDir === 'up' ? '+' : sumDir === 'down' ? '−' : '';
+
+    // 1X Calculations (on ₹1,00,000)
+    var profit1x = (INVEST_1X * totalPct) / 100;
+    var final1x = INVEST_1X + profit1x;
+
+    // 5X Leverage Calculations (on ₹5,00,000)
+    var pct5x = Math.round(totalPct * 5 * 100) / 100;
+    var profit5x = (INVEST_5X * totalPct) / 100;
+    var final5x = INVEST_5X + profit5x;
+
+    summaryWrap.className = 'summary-wrap show';
+    card1x.className = 'sum-card ' + sumDir;
+    card5x.className = 'sum-card ' + sumDir;
+
+    document.getElementById('sub-1x').textContent = 'Combined return across ' + n + (n === 1 ? ' stock' : ' stocks');
+    document.getElementById('pct-1x').textContent = sign + Math.abs(totalPct).toFixed(2) + '%';
+    document.getElementById('profit-1x').textContent = sign + '₹' + fmt(Math.abs(profit1x));
+    document.getElementById('total-1x').textContent = '₹' + fmt(final1x);
+
+    document.getElementById('sub-5x').textContent = '1L capital = ₹' + fmt(INVEST_1X + profit5x) + ' (' + sign + Math.abs(totalPct).toFixed(2) + '% × 5)';
+    document.getElementById('pct-5x').textContent = sign + Math.abs(pct5x).toFixed(2) + '%';
+    document.getElementById('profit-5x').textContent = sign + '₹' + fmt(Math.abs(profit5x));
+    document.getElementById('total-5x').textContent = '₹' + fmt(final5x);
+
+    try{localStorage.setItem('stockRows',JSON.stringify(rows));}catch(e){}
+  }
+
+  function readFile(f){
+    if(!f)return;
+    if(typeof XLSX==='undefined'){msg.textContent='The Excel reader could not load. Check your connection and reload.';return;}
+    var fr=new FileReader();
+    fr.onload=function(e){
+      try{
+        var wb=XLSX.read(e.target.result,{type:'array'});
+        var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+        render(rows);
+      }catch(err){msg.textContent='That file could not be read. Try saving it again as .xlsx.';}
+    };
+    fr.readAsArrayBuffer(f);
+  }
+
+  document.getElementById('pick').addEventListener('click',function(e){e.preventDefault();input.click();});
+  drop.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();input.click();}});
+  input.addEventListener('change',function(){readFile(input.files[0]);});
+  ['dragenter','dragover'].forEach(function(t){drop.addEventListener(t,function(e){e.preventDefault();drop.classList.add('over');});});
+  ['dragleave','drop'].forEach(function(t){drop.addEventListener(t,function(e){e.preventDefault();drop.classList.remove('over');});});
+  drop.addEventListener('drop',function(e){readFile(e.dataTransfer.files[0]);});
+
+  document.getElementById('sample').addEventListener('click',function(e){
+    e.preventDefault();
+    render([
+      {'stock name':'Cms Info Systems Ltd','stock NSE code':'CMSINFO','Headline':'CMS Info Systems shareholders approve ₹5.25 dividend, appoint Poole','opening':197.67,'closing':202.31},
+      {'stock name':'Sample Down Ltd','stock NSE code':'SAMPLE','Headline':'Example of a stock that closed lower','opening':250,'closing':244.5}
+    ]);
+  });
+
+  try{var saved=localStorage.getItem('stockRows');if(saved)render(JSON.parse(saved));}catch(e){}
+})();
+</script>
+</body>
+</html>
